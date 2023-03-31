@@ -1,50 +1,40 @@
 
 
 import java.io.InputStream;
-import java.net.URI;
 import java.net.URL;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.net.http.HttpResponse.BodyHandlers;
 import java.util.List;
-import java.util.Map;
 
 
 public class App {
 	public static void main(String[] args) throws Exception {
 		
-		//https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY
-		String url = "https://raw.githubusercontent.com/alura-cursos/imersao-java-2-api/main/TopMovies.json";
 		
-		URI endereco = URI.create(url);
+//		ExtratorDeConteudo extrator = new ExtratorDeConteudoDoIMDB();
+//		String url = "https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY ";
 		
-		HttpClient cliente = HttpClient.newHttpClient();
-		HttpRequest requisicao = HttpRequest.newBuilder(endereco).GET().build();
-		HttpResponse<String> resposta = cliente.send(requisicao, BodyHandlers.ofString());
+		String url = "https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY&start_date=2022-06-12&end_date=2022-06-14";
+		ExtratorDeConteudo extrator = new ExtratorDeConteudoDaNasa();
 		
-		String body = resposta.body();
+		var http = new ClienteHttp();
+		String json = http.buscaDados(url);
 		
-		var parser = new JsonParser();
+		List<Conteudo> conteudos = extrator.extraiConteudos(json);
 		
-		List<Map<String, String>> ListaDeConteudos = parser.parse(body);
 		
 		var geradora = new GeradoraDeFigurinhas();
 		
-		for (int i = 0; i < 10; i++) {
+		for (int i = 0; i < 3; i++) {
             
-			Map<String, String> conteudo = ListaDeConteudos.get(i);
-			
-			String urlImage = conteudo.get("image").replaceAll("(@+)(.*).jpg$", "$1.jpg");
-			String titulo = conteudo.get("title");
-			
-			InputStream inputStream = new URL(urlImage).openStream();
-			String nomeArquivo = "inside/" + titulo + ".png";
+			Conteudo conteudo = conteudos.get(i);
+						
+			InputStream inputStream = new URL(conteudo.getUrlImagem()).openStream();
+			String nomeArquivo = "inside/" + conteudo.getTitulo() + ".png";
 			
 			geradora.criaFigurinha(inputStream, nomeArquivo);
 			
             
-            System.out.println(conteudo.get("title"));
+            System.out.println(conteudo.getTitulo());
+            System.out.println();
 		}
 	}
 }
